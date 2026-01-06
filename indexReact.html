@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="style.css"/>
+  <title>Availability Checker (React CDN)</title>
+
+  <!-- React -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+
+  <!-- Babel (to use JSX in browser) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+
+  <div id="root"></div>
+
+ <script type="text/babel">
+const employees = [
+  { name: "John", img: "https://i.pravatar.cc/100?img=12" },
+  { name: "Jacob", img: "https://i.pravatar.cc/100?img=56" },
+  { name: "Maria", img: "https://i.pravatar.cc/100?img=47" },
+  { name: "Avery", img: "https://i.pravatar.cc/100?img=32" },
+  { name: "Elizabeth", img: "https://i.pravatar.cc/100?img=34" }
+];
+
+const times = ["09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
+
+const availability = {
+  John: { start: "09:00", end: "17:00" },
+  Jacob: { start: "10:00", end: "15:00" },
+  Maria: { start: "12:00", end: "18:00" },
+  Avery: { start: "09:00", end: "17:00" },
+  Elizabeth: { start: "11:00", end: "16:00" }
+};
+
+function timeToMinutes(time) {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function timeToAngle(time) {
+  const [h] = time.split(":").map(Number);
+  // Map 9 → 0°, 17 → 320° (8 hours span)
+  return (h - 9) * 40;
+}
+
+function App() {
+  const [employee, setEmployee] = React.useState("");
+  const [time, setTime] = React.useState("");
+  const [result, setResult] = React.useState(null);
+
+  function checkAvailability() {
+    if (!employee || !time) {
+      setResult({ text: "Please select both an employee and a time.", ok: false });
+      return;
+    }
+
+    const { start, end } = availability[employee];
+    const selected = timeToMinutes(time);
+
+    if (
+      selected >= timeToMinutes(start) &&
+      selected < timeToMinutes(end)
+    ) {
+      setResult({ text: `${employee} is available at ${time}`, ok: true });
+    } else {
+      setResult({ text: `${employee} is NOT available at ${time}`, ok: false });
+    }
+  }
+
+  let availabilityStyle = {};
+
+if (employee) {
+  const { start, end } = availability[employee];
+  const startAngle = timeToAngle(start);
+  const endAngle = timeToAngle(end);
+
+  availabilityStyle = {
+    background: `conic-gradient(
+      #4f46e5 ${startAngle}deg,
+      #4f46e5 ${endAngle}deg,
+      #e5e7eb ${endAngle}deg
+    )`
+  };
+}
+
+
+  return (
+    <div className="app">
+      <h1>Availability Checker</h1>
+
+      {/* Employees */}
+      <h2>Select Employee</h2>
+      <div className="employee-grid">
+        {employees.map(emp => (
+          <div
+            key={emp.name}
+            className={`employee-card ${employee === emp.name ? "active" : ""}`}
+            onClick={() => setEmployee(emp.name)}
+          >
+            <img src={emp.img} />
+            <span>{emp.name}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Clock Time Selector */}
+      <h2>Select Time</h2>
+      <div className="clock" style={availabilityStyle}>
+        {times.map((t, i) => (
+          <button
+            key={t}
+            className={`time-dot ${time === t ? "selected" : ""}`}
+            style={{
+              transform: `rotate(${i * 40}deg) translate(0, -130px) rotate(-${i * 40}deg)`
+            }}
+            onClick={() => setTime(t)}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <button className="check-btn" onClick={checkAvailability}>
+        Check Availability
+      </button>
+
+      {result && (
+        <div className={`result ${result.ok ? "ok" : "bad"}`}>
+          {result.text}
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+
+</body>
+</html>
